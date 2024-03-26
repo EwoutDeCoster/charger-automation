@@ -1,0 +1,6 @@
+flask
+pandas
+requests
+asyncio
+python-nmap
+smtplib

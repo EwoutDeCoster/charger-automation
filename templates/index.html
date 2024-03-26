@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/x-icon">
+    <title>Mercedes A250 Charging Control</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #000;
+            color: #0078d6;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+        .status-container {
+            background-color: #f4f4f4;
+            border-left: 4px solid #0078d6;
+            margin: 20px 0;
+            padding: 10px;
+        }
+        .toggle-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-top: 10px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #0078d6;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #0078d6;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .note {
+            font-size: 0.9em;
+            text-align: center;
+            color: #666;
+        }
+        .info-section {
+    background-color: #f4f4f4;
+    border-left: 4px solid #0078d6;
+    margin: 20px 0;
+    padding: 10px;
+    text-align: center;
+}
+
+.weather-container, #monthly-peak-usage div {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 10px;
+}
+
+h2 {
+    color: #0078d6;
+}
+
+.schedule-container {
+    border-left: 4px solid #0078d6;
+    background-color: #f4f4f4;
+    margin: 20px 0;
+    padding: 10px;
+}
+
+.schedule-container h2 {
+    margin-bottom: 10px;
+}
+
+.schedule-container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.schedule-container label, .schedule-container input, .schedule-container button {
+    margin: 5px 0;
+}
+
+.schedule-container button {
+    padding: 5px 10px;
+    background-color: #0078d6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.schedule-container button:hover {
+    background-color: #005f8b;
+}
+
+.schedule-container button:active {
+    background-color: #004c73;
+}
+
+.schedule-container button:focus {
+    outline: none;
+}
+
+.schedule-container input[type="time"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+
+    /* Remove the default arrow on the input */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    /* change the dash to a custom color */
+    color: #0078d6;
+    /* change the style of the input text */
+    font-size: 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+
+
+
+
+}
+
+
+
+
+         /* Dark mode styles */
+    @media (prefers-color-scheme: dark) {
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .header {
+            background-color: #1a1a1a;
+            color: #00a2ff; /* Slightly brighter accent color for better visibility */
+        }
+
+        .status-container {
+            background-color: #2a2a2a;
+            border-left: 4px solid #00a2ff; /* Slightly brighter accent color for better visibility */
+        }
+
+        #monthly-peak-usage, .info-section {
+            background-color: #2a2a2a;
+            border-left: 4px solid #00a2ff; /* Slightly brighter accent color for better visibility */
+        }
+
+        .switch input:checked + .slider {
+            background-color: #00a2ff; /* Slightly brighter accent color for better visibility */
+        }
+
+        .slider {
+            background-color: #424242; /* Darker slider background */
+        }
+    }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="navigation" style="text-align: right; margin-top: 10px;">
+        <a href="/settings" style="color: #0078d6; text-decoration: none; font-size: 16px;">Instellingen</a>
+    </div>
+    <div class="header">
+        Mercedes A250 Oplader Automatisatie
+    </div>
+
+    <div class="image-container" style="display: flex; justify-content: center; align-items: center;">
+        <img src="{{ url_for('static', filename='image.png') }}" alt="Mercedes A250" style="max-width: 80%; height: auto;">
+    </div>
+
+    <div class="status-container">
+        <strong>Auto lader status:</strong> <span id="car-charging-status">{{ car_charging_status }}</span><br>
+        <strong>Huis energieverbruik:</strong> <span id="house-energy-usage">{{ house_energy_usage }}</span>
+    </div>
+    
+
+    <div class="toggle-container">
+        <label class="switch">
+            <input type="checkbox" id="charging-toggle" onchange="toggleCharging()" {{ 'checked' if overwrite_charging else '' }}>
+            <span class="slider round"></span>
+        </label>
+        <div class="note">Manueel oplader ingeschakeld houden</div>
+    </div>
+    <!-- Weather Information -->
+    <div class="info-section" id="weather-info">
+        <h2>Weer & Zon</h2>
+        <div class="weather-container">
+            <img id="weather-icon" src="" alt="Weather Icon" style="width: 50px; height: 50px;">
+            <span id="weather-text"></span>
+            <span id="sun-info">Zon op: <span id="sunrise-time"></span> - Zon onder: <span id="sunset-time"></span></span>
+        </div>
+    </div>
+
+<!-- Monthly Peak Usage Information -->
+<div class="info-section" id="monthly-peak-usage">
+    <h2>Monthly Peak Usage</h2>
+    <div>
+        <span id="peak-usage">Piek: </span><br>
+        <span id="peak-usage-time">Moment: </span>
+    </div>
+</div>
+<!--
+<div class="schedule-container">
+    <h2>Schedule Charger Activation</h2>
+    <form id="schedule-form">
+        <label for="day-select">Choose a day:</label>
+        <select id="day-select" name="day">
+            <option value="today">Today</option>
+            <option value="tomorrow">Tomorrow</option>
+            <option value="day-after-tomorrow">Day After Tomorrow</option>
+        </select>
+
+        <label for="time-input">Choose time:</label>
+        <input type="time" id="time-input" name="time" required>
+
+
+        <button type="submit">Schedule</button>
+    </form>
+</div> -->
+
+</div>
+
+<script>
+        function fetchCarChargingStatus() {
+    fetch('/car-charging-status')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('car-charging-status').textContent = data.car_charging_status;
+    })
+    .catch(error => console.error("Error fetching car charging status:", error));
+}
+document.addEventListener("DOMContentLoaded", function() {
+
+
+    function fetchWeatherData() {
+        fetch('/weather-data')
+        .then(response => response.json())
+        .then(data => {
+            const weatherData = data.weather_data;
+            document.getElementById('weather-icon').src = `http:${weatherData.icon}`; // Assuming the icon URL needs "http:" prefixed
+            document.getElementById('weather-text').textContent = `${weatherData.condition}, ${weatherData.temperature}`;
+            // Format sunrise and sunset times as needed
+            document.getElementById('sunrise-time').textContent = weatherData.sunrise;
+            document.getElementById('sunset-time').textContent = weatherData.sunset;
+        })
+        .catch(error => console.error("Error fetching weather data:", error));
+    }
+fetchWeatherData();
+    // Call this function to update the weather information on page load
+
+    function fetchHouseEnergyUsage() {
+        fetch('/house-energy-usage')
+        .then(response => response.json())
+        .then(data => {
+            /*if the power usage is negative, it means the house is producing more power than it's consuming. the text should be green*/
+            document.getElementById('house-energy-usage').textContent = data.house_energy_usage;
+            if (data.house_energy_usage < 0) {
+                document.getElementById('house-energy-usage').style.color = 'green';
+            } else {
+                /*inhert the color from the parent element*/
+                document.getElementById('house-energy-usage').style.color = 'inherit';
+            }
+            document.getElementById('peak-usage').textContent = `Piek: ${data.montly_power_peak_w}`;
+            document.getElementById('peak-usage-time').textContent = `Moment: ${data.timestamp}`;
+        })
+        .catch(error => console.error("Error fetching house energy usage:", error));
+    }
+
+    fetchCarChargingStatus();
+    // Fetch car charging status every 20 seconds
+    setInterval(fetchCarChargingStatus, 1000*30);
+    // Fetch house energy usage every 3 seconds
+    setInterval(fetchHouseEnergyUsage, 1000*3);
+    setInterval(fetchWeatherData, 1000 * 60 * 30); // Fetch weather data every 30 minutes
+});
+
+function toggleCharging() {
+    fetch('/toggle-charging', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        console.log("Charging toggled. Overwrite charging:", data.overwrite_charging);
+        // Optionally refresh the status immediately after toggling
+        fetchCarChargingStatus();
+    });
+}
+</script>
+
+</body>
+</html>

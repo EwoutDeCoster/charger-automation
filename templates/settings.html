@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            color: #000;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .email-list-container, .email-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        .email-item {
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="number"], input[type="email"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+        button {
+            background-color: #0078d6;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            width: 50%;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #0056a3;
+            transition: 0.3s;
+        }
+        a {
+            margin-top: 20px;
+            color: #0078d6;
+            text-decoration: none;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        a:hover {
+            text-decoration: underline;
+            transition: 0.3s;
+        }
+        .flash-message {
+            padding: 8px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #004c8c;
+            background-color: #e1f0ff;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #0078d6;
+            width: auto;
+            max-width: 300px;
+            transition: 0.3s;
+        }
+
+
+
+.email-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    padding: 5px;
+    border: 1px solid #ccc; /* Optional border for each item */
+    border-radius: 5px;
+    margin-bottom: 5px; /* Space between email items */
+}
+
+.remove-email {
+    background-color: #ff4d4d; /* Red color for delete button */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    /*as small as possible to only fit the text*/
+    width: auto;
+    transition: 0.3s;
+}
+
+.remove-email:hover {
+    background-color: #cc0000; /* Darker red on hover */
+    transition: 0.3s;
+}
+
+#new-email {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: calc(100% - 22px); /* Adjust input width considering padding and border */
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instellingen</h1>
+        <form action="/update-settings" method="post">
+            <div class="email-list-container">
+                <label>Email Meldingen:</label>
+                <div id="email-list">
+                    <!-- Email inputs will be added here dynamically -->
+                </div>
+                <input type="email" id="new-email" placeholder="Nieuw email adres">
+                <button type="button" onclick="addEmailClick()">Toevoegen</button>
+            </div>
+            
+            <label for="auto_oplaad_verbruik">Auto Oplaad Verbruik (W):</label>
+            <input type="number" id="auto_oplaad_verbruik" name="auto_oplaad_verbruik" value="{{ config['auto_oplaad_verbruik'] }}" required>
+            
+            <label for="max_piek_verbruik">Max Piek Verbruik (W):</label>
+            <input type="number" id="max_piek_verbruik" name="max_piek_verbruik" value="{{ config['max_piek_verbruik'] }}" required>
+            
+            <button type="submit">Opslaan</button>
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        {% endwith %}
+        
+        <a href="/">Terug</a>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the list with existing emails
+            const existingEmails = {{config['notification_contacts'] | tojson }};
+            existingEmails.forEach(email => addEmailToList(email));
+        
+            // Function to add an email to the visual list and include it in the form submission
+            function addEmailToList(email) {
+    const emailList = document.getElementById('email-list');
+
+    const emailDiv = document.createElement('div');
+    emailDiv.className = 'email-item';
+    emailDiv.style.display = 'flex';
+    emailDiv.style.alignItems = 'center';
+    emailDiv.style.justifyContent = 'space-between';
+    emailDiv.style.marginBottom = '10px';
+
+    const emailSpan = document.createElement('span');
+    emailSpan.textContent = email;
+    emailSpan.style.flexGrow = '1';
+    emailDiv.appendChild(emailSpan);
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.textContent = 'X';
+    removeButton.className = 'remove-email';
+    removeButton.style.marginLeft = '10px';
+    removeButton.onclick = function() {
+        emailList.removeChild(emailDiv);
+    };
+    emailDiv.appendChild(removeButton);
+
+    // Append a hidden input to carry the email data upon form submission
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'notification_contacts';
+    hiddenInput.value = email;
+    emailDiv.appendChild(hiddenInput);
+
+    emailList.appendChild(emailDiv);
+}
+        
+            // Function to add a new email from the input field
+            window.addEmail = function(event) {
+                if (event.key === 'Enter' || event.keyCode === 13) {
+                    event.preventDefault();  // Prevent form from submitting when pressing Enter
+                    const inputField = document.getElementById('new-email');
+                    const newEmail = inputField.value.trim();
+                    if (newEmail) {
+                        addEmailToList(newEmail);
+                        inputField.value = '';  // Clear input field after adding
+                    }
+                }
+            };
+        
+            // Click handler for the Add button
+            window.addEmailClick = function() {
+                const inputField = document.getElementById('new-email');
+                const newEmail = inputField.value.trim();
+                if (newEmail) {
+                    addEmailToList(newEmail);
+                    inputField.value = '';  // Clear input field after adding
+                }
+            };
+        });
+        </script>
+        
+</body>
