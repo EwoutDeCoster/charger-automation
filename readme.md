@@ -11,6 +11,7 @@ This project offers an innovative solution for automating the charging process o
 - **Web Interface**: A user-friendly dashboard for real-time monitoring, scheduling charger activation, and adjusting settings to user preferences.
 - **Notifications**: Receive an email when the charger status is changed.
 - **Darkmode**: Automatic system darkmode.
+- **Solar charging**: Only charge on solar energy.
 
 ## Getting Started
 
