@@ -9,7 +9,7 @@ with open('credentials.json', 'r') as f:
 
 hwendpoint = "/api/v1/data"
 hw_mac = credentials['hw']['mac']
-hwip = "192.168.0.177"
+hwip = credentials['hw']['ip']
 
 with open('credentials.json', 'r') as f:
     credentials = json.load(f)
@@ -32,14 +32,27 @@ def get_hw_address(mac_address: str) -> str:
     return host
 
 
-def get_energy_usage():
-    url = f"http://{hwip}{hwendpoint}"
-    response = requests.get(url)
-    if response.status_code == 404:
-        refresh_ip()
+def get_energy_usage(rerun=False):
+    try:
         url = f"http://{hwip}{hwendpoint}"
         response = requests.get(url)
-    return response.json()
+        if response.status_code == 404:
+            refresh_ip()
+            url = f"http://{hwip}{hwendpoint}"
+            response = requests.get(url)
+        return response.json()
+    # If the device is not found, get the new IP address and try again
+    except requests.exceptions.ConnectionError:
+        if rerun:
+            return "Device not found"
+        refresh_ip()
+        # replace the IP address in the credentials file
+        with open('credentials.json', 'r') as f:
+            credentials = json.load(f)
+        credentials['hw']['ip'] = hwip
+        with open('credentials.json', 'w') as f:
+            json.dump(credentials, f)
+        return get_energy_usage(rerun=True)
 
 
 def refresh_ip():

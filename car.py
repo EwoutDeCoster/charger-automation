@@ -33,6 +33,10 @@ async def get_usage(client: ewelink.Client):
     device = client.get_device("100169269c")
     return device.params['power']
 
+async def get_device_status(client: ewelink.Client):
+    device = client.get_device("100169269c")
+    return device.state
+
 async def main():
     with open('credentials.json', 'r') as f:
         credentials = json.load(f)
@@ -48,7 +52,7 @@ async def main():
 
     # Now, call the specific function you want with the authenticated client
     # For example, to get the status:
-    await get_usage(client)
+    await get_device_status(client)
 
 
     await client.http.session.close()

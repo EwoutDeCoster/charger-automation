@@ -20,7 +20,10 @@ logging.Formatter.converter = time.gmtime
 
 # log to log.txt
 # if ran on a raspberry pi, change the path to /home/pi/automation
-os.chdir('/home/ewout/automation')
+if os.name == 'posix':
+    os.chdir('/home/ewout/automation')
+else:
+    os.chdir('C:/Users/ewama/Documents/charger automation')
 
 
 
@@ -81,8 +84,16 @@ async def auto_opladen_actief():
 
     await client.http.session.close()
     await client.ws.close()
-
     return float(usage) > auto_oplaad_verbruik/2
+
+async def auto_oplader_staat_aan():
+    client = ewelink.Client(password=password, email=email)
+    await client.login()
+    status = await car.get_device_status(client)
+    status = status["Power"].value
+    await client.http.session.close()
+    await client.ws.close()
+    return status == 'on'
 
 # auto opladen actief en huidig verbruik > max_piek_verbruik => opladen uitschakelen
 # auto opladen actief en huidig verbruik < max_piek_verbruik => niets doen
@@ -113,14 +124,36 @@ def manage_opladen():
     with open('config.json', 'r') as f:
         config = json.load(f)
     OVERWRITE_CHARGING = config['overwrite_charging']
+    ONLY_CHARGE_WHEN_SOLAR = config['only_charge_when_solar']
     max_piek_verbruik = config['max_piek_verbruik']
     auto_oplaad_verbruik = config['auto_oplaad_verbruik']
-    if OVERWRITE_CHARGING:
-        return
     loop = asyncio.get_event_loop()
     auto_opladen = loop.run_until_complete(auto_opladen_actief())
+    oplader_aan = loop.run_until_complete(auto_oplader_staat_aan())
     huidig_verbruik = hw.get_energy_usage().get('active_power_w')
-    if auto_opladen:
+# if overwrite charging is enabled, charge the car regardless of the current energy usage
+    if OVERWRITE_CHARGING:
+        if not oplader_aan:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(auto_aan())
+        return
+# only charge the car when there is enough solar energy
+    if ONLY_CHARGE_WHEN_SOLAR:
+        charging_allowed = abs(huidig_verbruik) > auto_oplaad_verbruik + 100
+        if oplader_aan and not charging_allowed:
+            loop.run_until_complete(auto_uit())
+            logging.info(f'Auto opladen uitgeschakeld, huidig verbruik: {huidig_verbruik} W < 100 W')
+            for i in config['notification_contacts']:
+                notification.send_email('Mercedes A250 Oplader Status Update', 'Er is niet genoeg zonne-energie om de auto op te laden.', False, i)
+        elif not oplader_aan and charging_allowed:
+            loop.run_until_complete(auto_aan())
+            logging.info(f'Auto opladen ingeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W > 100 W')
+            for i in config['notification_contacts']:
+                notification.send_email('Mercedes A250 Oplader Status Update', 'Er is genoeg zonne-energie om de auto op te laden.', True, i)
+        return
+            
+# regular peak power management    
+    if oplader_aan:
         if huidig_verbruik > max_piek_verbruik:
             loop.run_until_complete(auto_uit())
             logging.info(f'Auto opladen uitgeschakeld, huidig verbruik: {huidig_verbruik} W > max verbruik: {max_piek_verbruik} W')

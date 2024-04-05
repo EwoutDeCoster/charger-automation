@@ -227,6 +227,13 @@ h2 {
         </label>
         <div class="note">Manueel oplader ingeschakeld houden</div>
     </div>
+    <div class="toggle-container">
+        <label class="switch">
+            <input type="checkbox" id="solar-toggle" onchange="toggleSolarCharging()" {{ 'checked' if only_charge_when_solar else '' }}>
+            <span class="slider round"></span>
+        </label>
+        <div class="note">Alleen opladen met zonne-energie</div>
+    </div>
     <!-- Weather Information -->
     <div class="info-section" id="weather-info">
         <h2>Weer & Zon</h2>
@@ -319,6 +326,26 @@ fetchWeatherData();
     setInterval(fetchHouseEnergyUsage, 1000*3);
     setInterval(fetchWeatherData, 1000 * 60 * 30); // Fetch weather data every 30 minutes
 });
+
+function toggleSolarCharging() {
+    const isChecked = document.getElementById('solar-toggle').checked;
+    fetch('/update-solar-charging', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ only_charge_when_solar: isChecked }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Solar charging updated:", data);
+        // Optionally, show a confirmation message or handle errors
+    })
+    .catch(error => {
+        console.error("Error updating solar charging:", error);
+        // Optionally, revert the checkbox or show an error message
+    });
+}
 
 function toggleCharging() {
     fetch('/toggle-charging', {method: 'POST'})

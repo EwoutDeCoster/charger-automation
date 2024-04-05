@@ -36,7 +36,7 @@ def home():
         return render_template('index.html', 
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
-                            overwrite_charging=config["overwrite_charging"])
+                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"])
     except RuntimeError as e:
         asyncio.wait(3)
         config = load_config()
@@ -47,7 +47,7 @@ def home():
         return render_template('index.html', 
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
-                            overwrite_charging=config["overwrite_charging"])
+                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"])
     
 @app.route('/settings')
 def settings():
@@ -75,12 +75,12 @@ def update_settings():
 def car_charging_status():
     # Dummy data for demonstration; replace with real data retrieval
     try:
-        auto_opladen = loop.run_until_complete(main.auto_opladen_actief())
+        auto_opladen = loop.run_until_complete(main.auto_oplader_staat_aan())
         car_charging_status = "Ingeschakeld"  if auto_opladen else "Uitgeschakeld"
         return jsonify(car_charging_status=car_charging_status)
     except RuntimeError as e:
         asyncio.wait(3)
-        auto_opladen = loop.run_until_complete(main.auto_opladen_actief())
+        auto_opladen = loop.run_until_complete(main.auto_oplader_staat_aan())
         car_charging_status = "Ingeschakeld"  if auto_opladen else "Uitgeschakeld"
         return jsonify(car_charging_status=car_charging_status)
 
@@ -114,6 +114,21 @@ def toggle_charging():
     config["overwrite_charging"] = not config["overwrite_charging"]
     save_config(config)
     return jsonify({"success": True, "overwrite_charging": config["overwrite_charging"]})
+
+@app.route('/update-solar-charging', methods=['POST'])
+def update_solar_charging():
+    try:
+        data = request.get_json()
+        only_charge_when_solar = data.get('only_charge_when_solar', False)
+        
+        # Load, update, and save the configuration
+        config = load_config()  # Assuming you have a function to load your current config
+        config['only_charge_when_solar'] = only_charge_when_solar
+        save_config(config)  # Assuming you have a function to save your updated config
+        
+        return jsonify({"success": True, "message": "Solar charging setting updated successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)

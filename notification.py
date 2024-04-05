@@ -13,6 +13,7 @@ with open('credentials.json', 'r') as f:
 email_address = credentials["email"]["email"]
 email_password = credentials["email"]["password"]
 host = credentials["email"]["host"]
+port = credentials["email"]["port"]
 # The email address of the recipient
 
 # The subject of the email
@@ -65,7 +66,7 @@ def send_email(subject, body, is_charging_on, recipient_email):
 
     try:
         # Use SMTP_SSL for SSL. Change to smtplib.SMTP if using TLS on port 587.
-        server = smtplib.SMTP_SSL(host, 465)
+        server = smtplib.SMTP_SSL(host, port)
         server.login(email_address, email_password)
         server.sendmail(email_address, recipient_email, msg.as_string())
         server.quit()
