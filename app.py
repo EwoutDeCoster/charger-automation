@@ -7,6 +7,8 @@ import asyncio
 import hw
 import car
 import os
+import main
+from threading import Thread
 
 loop = asyncio.get_event_loop()
 
@@ -24,6 +26,11 @@ def load_config():
 def save_config(config):
     with open('config.json', 'w') as file:
         json.dump(config, file)
+
+def async_wrapper(loop, coroutine):
+    """Run the given coroutine in the provided event loop."""
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(coroutine)
 
 @app.route('/')
 def home():
@@ -124,10 +131,10 @@ def update_solar_charging():
         # Load, update, and save the configuration
         config = load_config()  # Assuming you have a function to load your current config
         config['only_charge_when_solar'] = only_charge_when_solar
-        save_config(config)  # Assuming you have a function to save your updated config
-        
+        save_config(config)  # Assuming you have a function to save your updated config      
         return jsonify({"success": True, "message": "Solar charging setting updated successfully."})
     except Exception as e:
+        print(e)
         return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':

@@ -28,8 +28,6 @@ else:
 
 
 
-
-
 with open('credentials.json', 'r') as f:
     credentials = json.load(f)
 password = credentials['ewelink']['password']
@@ -103,14 +101,14 @@ async def auto_oplader_staat_aan():
 async def auto_aan():
     client = ewelink.Client(password=password, email=email)
     await client.login()
-    await car.turn_on(client=client)
+    await car.turn_on(client)
     await client.http.session.close()
     await client.ws.close()
 
 async def auto_uit():
     client = ewelink.Client(password=password, email=email)
     await client.login()
-    await car.turn_off(cleint=client)
+    await car.turn_off(client)
     await client.http.session.close()
     await client.ws.close()
 
@@ -139,10 +137,12 @@ def manage_opladen():
         return
 # only charge the car when there is enough solar energy
     if ONLY_CHARGE_WHEN_SOLAR:
-        charging_allowed = abs(huidig_verbruik) > auto_oplaad_verbruik + 100
+        # the car charging is allowed when the current energy usage plus the car charging usage is less than 100 W
+        print(huidig_verbruik)
+        charging_allowed = huidig_verbruik + auto_oplaad_verbruik < 100
         if oplader_aan and not charging_allowed:
             loop.run_until_complete(auto_uit())
-            logging.info(f'Auto opladen uitgeschakeld, huidig verbruik: {huidig_verbruik} W < 100 W')
+            logging.info(f'Auto opladen uitgeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W < 100 W')
             for i in config['notification_contacts']:
                 notification.send_email('Mercedes A250 Oplader Status Update', 'Er is niet genoeg zonne-energie om de auto op te laden.', False, i)
         elif not oplader_aan and charging_allowed:
