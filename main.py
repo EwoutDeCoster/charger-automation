@@ -10,6 +10,7 @@ import asyncio
 import logging
 import notification
 import os
+import timecheck
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('asyncio').setLevel(logging.INFO)
@@ -123,6 +124,7 @@ def manage_opladen():
         config = json.load(f)
     OVERWRITE_CHARGING = config['overwrite_charging']
     ONLY_CHARGE_WHEN_SOLAR = config['only_charge_when_solar']
+    ONLY_CHARGE_AT_DAYTIME = config['only_charge_at_daytime']
     max_piek_verbruik = config['max_piek_verbruik']
     auto_oplaad_verbruik = config['auto_oplaad_verbruik']
     loop = asyncio.get_event_loop()
@@ -151,7 +153,24 @@ def manage_opladen():
             for i in config['notification_contacts']:
                 notification.send_email('Mercedes A250 Oplader Status Update', 'Er is genoeg zonne-energie om de auto op te laden.', True, i)
         return
-            
+    
+    if ONLY_CHARGE_AT_DAYTIME:
+        timecheck.check_sun_data()
+        if timecheck.sunisup():
+            if not oplader_aan:
+                loop.run_until_complete(auto_aan())
+                logging.info(f'Auto opladen ingeschakeld, de zon is opgekomen.')
+                for i in config['notification_contacts']:
+                    notification.send_email('Mercedes A250 Oplader Status Update', 'De zone is opgekomen, de auto wordt opgeladen.', True, i)
+            return
+        else:
+            if oplader_aan:
+                loop.run_until_complete(auto_uit())
+                logging.info(f'Auto opladen uitgeschakeld, de zon is ondergegaan.')
+                for i in config['notification_contacts']:
+                    notification.send_email('Mercedes A250 Oplader Status Update', 'De zon is ondergegaan, de auto wordt niet meer opgeladen.', False, i)
+            return
+     
 # regular peak power management    
     if oplader_aan:
         if huidig_verbruik > max_piek_verbruik:
