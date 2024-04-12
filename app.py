@@ -1,4 +1,4 @@
-from flask import Flask, flash, render_template, request, jsonify, redirect, url_for
+from flask import Flask, flash, render_template, request, jsonify, redirect, send_from_directory, url_for
 import json
 
 import requests
@@ -39,7 +39,7 @@ def home():
         # Dummy data for demonstration; replace with real data retrieval
         car_charging_status = loop.run_until_complete(main.auto_opladen_actief())  # or "Not Charging"
         car_charging_status = "Ingeschakeld"  if car_charging_status else "Uitgeschakeld"
-        house_energy_usage = "5.2 kWh"
+        house_energy_usage = ""
         return render_template('index.html', 
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
@@ -50,7 +50,7 @@ def home():
         # Dummy data for demonstration; replace with real data retrieval
         car_charging_status = loop.run_until_complete(main.auto_opladen_actief())  # or "Not Charging"
         car_charging_status = "Ingeschakeld"  if car_charging_status else "Uitgeschakeld"
-        house_energy_usage = "5.2 kWh"
+        house_energy_usage = ""
         return render_template('index.html', 
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
@@ -98,7 +98,11 @@ def house_energy_usage():
     # timestamp format 240310191500 to dd/mm/yyyy om 19:15
     timestamp = str(data.get('montly_power_peak_timestamp'))
     timestamp = f"{timestamp[4:6]}/{timestamp[2:4]}/{timestamp[0:2]} om {timestamp[6:8]}:{timestamp[8:10]}"
-    return jsonify(house_energy_usage=f"{data.get('active_power_w')} W", montly_power_peak_w=data.get('montly_power_peak_w'), timestamp=timestamp)
+    print(data.get('wifi_strength'))
+    one = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTgiIHI9IjIiIGZpbGw9IndoaXRlIi8+PC9zdmc+"
+    two = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMTIgMTZjLTEuMSAwLTIgLjktMiAycy45IDIgMiAyczItLjkgMi0ycy0uOS0yLTItMm0tNi42Mi0xLjYzYy0uNjMtLjYzLS41OS0xLjcxLjEzLTIuMjRDNy4zMyAxMC43OSA5LjU3IDEwIDEyIDEwYzIuNDMgMCA0LjY3Ljc5IDYuNDkgMi4xM2MuNzIuNTMuNzYgMS42LjEzIDIuMjRjLS41My41NC0xLjM3LjU3LTEuOTguMTJBNy45MjUgNy45MjUgMCAwIDAgMTIgMTNjLTEuNzMgMC0zLjMzLjU1LTQuNjQgMS40OWMtLjYxLjQ0LTEuNDUuNDEtMS45OC0uMTIiLz48L3N2Zz4="
+    three = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMi4wNiAxMC4wNmMuNTEuNTEgMS4zMi41NiAxLjg3LjFjNC42Ny0zLjg0IDExLjQ1LTMuODQgMTYuMTMtLjAxYy41Ni40NiAxLjM4LjQyIDEuODktLjA5Yy41OS0uNTkuNTUtMS41Ny0uMS0yLjFjLTUuNzEtNC42Ny0xMy45Ny00LjY3LTE5LjY5IDBjLS42NS41Mi0uNyAxLjUtLjEgMi4xbTcuNzYgNy43NmwxLjQ3IDEuNDdjLjM5LjM5IDEuMDIuMzkgMS40MSAwbDEuNDctMS40N2MuNDctLjQ3LjM3LTEuMjgtLjIzLTEuNTlhNC4yOCA0LjI4IDAgMCAwLTMuOTEgMGMtLjU3LjMxLS42OCAxLjEyLS4yMSAxLjU5bS0zLjczLTMuNzNjLjQ5LjQ5IDEuMjYuNTQgMS44My4xM2E3LjA2NCA3LjA2NCAwIDAgMSA4LjE2IDBjLjU3LjQgMS4zNC4zNiAxLjgzLS4xM2wuMDEtLjAxYy42LS42LjU2LTEuNjItLjEzLTIuMTFjLTMuNDQtMi40OS04LjEzLTIuNDktMTEuNTggMGMtLjY5LjUtLjczIDEuNTEtLjEyIDIuMTIiLz48L3N2Zz4="
+    return jsonify(house_energy_usage=f"{data.get('active_power_w')} W", montly_power_peak_w=data.get('montly_power_peak_w'), timestamp=timestamp, wifi_strength=three if data.get('wifi_strength') > 75 else two if data.get('wifi_strength') > 50 else one)
 
 @app.route('/weather-data')
 def weather_data():
@@ -136,6 +140,27 @@ def update_solar_charging():
     except Exception as e:
         print(e)
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/update-daytime-charging', methods=['POST'])
+def update_daytime_charging():
+    try:
+        data = request.get_json()
+        daytime_charging = data.get('only_charge_at_daytime', False)
+        
+        # Load, update, and save the configuration
+        config = load_config()  # Assuming you have a function to load your current config
+        config['only_charge_at_daytime'] = daytime_charging
+        save_config(config)  # Assuming you have a function to save your updated config
+        return jsonify({"success": True, "message": "Daytime charging setting updated successfully."})
+    except Exception as e:
+        print(e)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/check-notifications')
+def check_notifications():
+    # Dummy function to simulate server deciding to send a notification
+    return {'title': 'Server Alert', 'body': 'Something important happened!'}
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)
