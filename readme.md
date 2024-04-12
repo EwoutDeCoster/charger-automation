@@ -48,3 +48,6 @@ The web interface is accessible locally and provides detailed insights into your
 ![Charger statuspage](img/Screenshot.png "Charger statuspage")
 #### Config
 ![Config page](img/Screenshot2.png "Config page")
+
+### Acknowledgements
+- **ewelink-api-python:** This project uses [ewelink-api-python](https://github.com/AceExpert/ewelink-api-python) for integration with the eWeLink API, enabling control of IoT devices.
