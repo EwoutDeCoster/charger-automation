@@ -146,12 +146,12 @@ def manage_opladen():
             loop.run_until_complete(auto_uit())
             logging.info(f'Auto opladen uitgeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W < 100 W')
             for i in config['notification_contacts']:
-                notification.send_email('Mercedes A250 Oplader Status Update', 'Er is niet genoeg zonne-energie om de auto op te laden.', False, i)
+                notification.send_email('Er is niet genoeg zonne-energie om de auto op te laden.', False, i)
         elif not oplader_aan and charging_allowed:
             loop.run_until_complete(auto_aan())
             logging.info(f'Auto opladen ingeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W > 100 W')
             for i in config['notification_contacts']:
-                notification.send_email('Mercedes A250 Oplader Status Update', 'Er is genoeg zonne-energie om de auto op te laden.', True, i)
+                notification.send_email('Er is genoeg zonne-energie om de auto op te laden.', True, i)
         return
     
     if ONLY_CHARGE_AT_DAYTIME:
@@ -161,14 +161,14 @@ def manage_opladen():
                 loop.run_until_complete(auto_aan())
                 logging.info(f'Auto opladen ingeschakeld, de zon is opgekomen.')
                 for i in config['notification_contacts']:
-                    notification.send_email('Mercedes A250 Oplader Status Update', 'De zone is opgekomen, de auto wordt opgeladen.', True, i)
+                    notification.send_email('De zon komt op. De auto mag opladen.', True, i)
             return
         else:
             if oplader_aan:
                 loop.run_until_complete(auto_uit())
                 logging.info(f'Auto opladen uitgeschakeld, de zon is ondergegaan.')
                 for i in config['notification_contacts']:
-                    notification.send_email('Mercedes A250 Oplader Status Update', 'De zon is ondergegaan, de auto wordt niet meer opgeladen.', False, i)
+                    notification.send_email('De zon is ondergegaan. De auto mag niet meer laden.', False, i)
             return
      
 # regular peak power management    
@@ -177,7 +177,7 @@ def manage_opladen():
             loop.run_until_complete(auto_uit())
             logging.info(f'Auto opladen uitgeschakeld, huidig verbruik: {huidig_verbruik} W > max verbruik: {max_piek_verbruik} W')
             for i in config['notification_contacts']:
-                notification.send_email('Mercedes A250 Oplader Status Update', 'De status van de oplader is gewijzigd.', False, i)
+                notification.send_email(f'Er is te veel verbruik om de auto op te laden. ({huidig_verbruik} W)', False, i)
         else:
             pass
     else:
@@ -186,7 +186,7 @@ def manage_opladen():
             logging.info(f'Auto opladen ingeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W < max verbruik: {max_piek_verbruik} W')
             try:
                 for i in config['notification_contacts']:
-                    notification.send_email('Mercedes A250 Oplader Status Update', 'De status van de oplader is gewijzigd.', True, i)
+                    notification.send_email('De auto oplader is opnieuw ingeschakeld.', True, i)
             except:
                 pass
         else:
