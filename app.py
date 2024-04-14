@@ -43,7 +43,7 @@ def home():
         return render_template('index.html', 
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
-                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"])
+                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"], only_charge_at_daytime=config["only_charge_at_daytime"])
     except RuntimeError as e:
         asyncio.wait(3)
         config = load_config()
@@ -54,7 +54,7 @@ def home():
         return render_template('index.html', 
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
-                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"])
+                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"], only_charge_at_daytime=config["only_charge_at_daytime"])
     
 @app.route('/settings')
 def settings():
