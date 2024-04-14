@@ -222,7 +222,7 @@ h2 {
     <div class="status-container">
         <strong>Auto lader status:</strong> <span id="car-charging-status">{{ car_charging_status }}</span><br>
         <strong>Huis energieverbruik:</strong> <span id="house-energy-usage">{{ house_energy_usage }}</span>
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMjAuMDYgMTAuMTRjLjU2LjQ2IDEuMzguNDIgMS44OS0uMDljLjU5LS41OS41NS0xLjU3LS4xLTIuMWMtMy41OS0yLjk0LTguMi00LjAzLTEyLjU1LTMuMjZsMi41OSAyLjU5YzIuODktLjAzIDUuOC45MiA4LjE3IDIuODZtLTIuMjcgMS44M2MtLjc4LS41Ny0xLjYzLTEtMi41Mi0xLjNsMi45NSAyLjk1Yy4yNC0uNTguMS0xLjI3LS40My0xLjY1bS0zLjg0IDQuMjZhNC4yOCA0LjI4IDAgMCAwLTMuOTEgMGMtLjU5LjMxLS43IDEuMTItLjIzIDEuNTlsMS40NyAxLjQ3Yy4zOS4zOSAxLjAyLjM5IDEuNDEgMGwxLjQ3LTEuNDdjLjQ5LS40Ny4zOS0xLjI4LS4yMS0xLjU5bTUuNzMgMS42N0w0LjEyIDIuMzRhLjk5Ni45OTYgMCAxIDAtMS40MSAxLjQxTDUuMDUgNi4xYy0xLjAxLjUtMS45OSAxLjExLTIuODkgMS44NWExLjQyIDEuNDIgMCAwIDAtLjEgMi4xYy41MS41MSAxLjMyLjU2IDEuODcuMWMxLS44MiAyLjEtMS40NiAzLjI1LTEuOTNsMi4yMyAyLjIzYy0xLjEzLjMtMi4yMS44LTMuMTkgMS41MWMtLjY5LjUtLjczIDEuNTEtLjEzIDIuMTFsLjAxLjAxYy40OS40OSAxLjI2LjU0IDEuODMuMTNhNy4xMzUgNy4xMzUgMCAwIDEgMy45Ny0xLjI5bDYuMzcgNi4zN2MuMzkuMzkgMS4wMi4zOSAxLjQxIDBjLjM5LS4zNy4zOS0xIDAtMS4zOSIvPjwvc3ZnPg==" id="wifi-signal">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMi4wNiAxMC4wNmMuNTEuNTEgMS4zMi41NiAxLjg3LjFjNC42Ny0zLjg0IDExLjQ1LTMuODQgMTYuMTMtLjAxYy41Ni40NiAxLjM4LjQyIDEuODktLjA5Yy41OS0uNTkuNTUtMS41Ny0uMS0yLjFjLTUuNzEtNC42Ny0xMy45Ny00LjY3LTE5LjY5IDBjLS42NS41Mi0uNyAxLjUtLjEgMi4xbTcuNzYgNy43NmwxLjQ3IDEuNDdjLjM5LjM5IDEuMDIuMzkgMS40MSAwbDEuNDctMS40N2MuNDctLjQ3LjM3LTEuMjgtLjIzLTEuNTlhNC4yOCA0LjI4IDAgMCAwLTMuOTEgMGMtLjU3LjMxLS42OCAxLjEyLS4yMSAxLjU5bS0zLjczLTMuNzNjLjQ5LjQ5IDEuMjYuNTQgMS44My4xM2E3LjA2NCA3LjA2NCAwIDAgMSA4LjE2IDBjLjU3LjQgMS4zNC4zNiAxLjgzLS4xM2wuMDEtLjAxYy42LS42LjU2LTEuNjItLjEzLTIuMTFjLTMuNDQtMi40OS04LjEzLTIuNDktMTEuNTggMGMtLjY5LjUtLjczIDEuNTEtLjEyIDIuMTIiLz48L3N2Zz4=" id="wifi-signal">
     </div>
     
 
@@ -327,7 +327,11 @@ fetchWeatherData();
             }
             document.getElementById('peak-usage').textContent = `Piek: ${data.montly_power_peak_w}`;
             document.getElementById('peak-usage-time').textContent = `Moment: ${data.timestamp}`;
-            document.getElementById('wifi-signal').src = data.wifi_strength;
+            try {
+                document.getElementById('wifi-signal').src = data.wifi_strength;
+            } catch (error) {
+                document.getElementById('wifi-signal').src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IiNmZjAwMDAiIGQ9Ik0yMC4wNiAxMC4xNGMuNTYuNDYgMS4zOC40MiAxLjg5LS4wOWMuNTktLjU5LjU1LTEuNTctLjEtMi4xYy0zLjU5LTIuOTQtOC4yLTQuMDMtMTIuNTUtMy4yNmwyLjU5IDIuNTljMi44OS0uMDMgNS44LjkyIDguMTcgMi44Nm0tMi4yNyAxLjgzYy0uNzgtLjU3LTEuNjMtMS0yLjUyLTEuM2wyLjk1IDIuOTVjLjI0LS41OC4xLTEuMjctLjQzLTEuNjVtLTMuODQgNC4yNmE0LjI4IDQuMjggMCAwIDAtMy45MSAwYy0uNTkuMzEtLjcgMS4xMi0uMjMgMS41OWwxLjQ3IDEuNDdjLjM5LjM5IDEuMDIuMzkgMS40MSAwbDEuNDctMS40N2MuNDktLjQ3LjM5LTEuMjgtLjIxLTEuNTltNS43MyAxLjY3TDQuMTIgMi4zNGEuOTk2Ljk5NiAwIDEgMC0xLjQxIDEuNDFMNS4wNSA2LjFjLTEuMDEuNS0xLjk5IDEuMTEtMi44OSAxLjg1YTEuNDIgMS40MiAwIDAgMC0uMSAyLjFjLjUxLjUxIDEuMzIuNTYgMS44Ny4xYzEtLjgyIDIuMS0xLjQ2IDMuMjUtMS45M2wyLjIzIDIuMjNjLTEuMTMuMy0yLjIxLjgtMy4xOSAxLjUxYy0uNjkuNS0uNzMgMS41MS0uMTMgMi4xMWwuMDEuMDFjLjQ5LjQ5IDEuMjYuNTQgMS44My4xM2E3LjEzNSA3LjEzNSAwIDAgMSAzLjk3LTEuMjlsNi4zNyA2LjM3Yy4zOS4zOSAxLjAyLjM5IDEuNDEgMGMuMzktLjM3LjM5LTEgMC0xLjM5Ii8+PC9zdmc+';
+            }
         })
         .catch(error => console.error("Error fetching house energy usage:", error));
     }
