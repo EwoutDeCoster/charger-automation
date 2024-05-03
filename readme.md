@@ -12,6 +12,7 @@ This project offers an innovative solution for automating the charging process o
 - **Notifications**: Receive an email when the charger status is changed.
 - **Darkmode**: Automatic system darkmode.
 - **Solar charging**: Only charge on solar energy.
+- **Login system**: A login system with included password reset and email service. This enables you to expose it to the internet.
 
 ## Getting Started
 
@@ -48,6 +49,12 @@ The web interface is accessible locally and provides detailed insights into your
 ![Charger statuspage](img/Screenshot.png "Charger statuspage")
 #### Config
 ![Config page](img/Screenshot2.png "Config page")
+#### Login system
+Login page<br>
+![Config page](img/Screenshot3.png "Config page")<br>
+Password reset page<br>
+![Config page](img/Screenshot4.png "Config page")<br>
+
 
 ### Acknowledgements
 - **ewelink-api-python:** This project uses [ewelink-api-python](https://github.com/AceExpert/ewelink-api-python) for integration with the eWeLink API, enabling control of IoT devices.
