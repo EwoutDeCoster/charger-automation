@@ -64,16 +64,9 @@ def home():
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
                             overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"], only_charge_at_daytime=config["only_charge_at_daytime"])
     except RuntimeError as e:
-        asyncio.wait(3)
-        config = load_config()
-        # Dummy data for demonstration; replace with real data retrieval
-        car_charging_status = loop.run_until_complete(main.auto_opladen_actief())  # or "Not Charging"
-        car_charging_status = "Ingeschakeld"  if car_charging_status else "Uitgeschakeld"
-        house_energy_usage = ""
-        return render_template('index.html', 
-                            car_charging_status="Data ophalen...", 
-                            house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
-                            overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"], only_charge_at_daytime=config["only_charge_at_daytime"])
+        print("Had to catch a RuntimeError in home")
+        asyncio.wait(5)
+        return render_template('delaypage.html', redirect='/', delay=5, message="De waarden worden opgehaald, even geduld aub...")
 
 @app.route('/settings')
 def settings():
@@ -102,16 +95,20 @@ def update_settings():
 
 @app.route('/car-charging-status')
 def car_charging_status():
-    # Dummy data for demonstration; replace with real data retrieval
+    # car_charging_status = charger on or off
+    #iscarcharging = weather the car is charging or not
     try:
         auto_opladen = loop.run_until_complete(main.auto_oplader_staat_aan())
+        iscarcharging = loop.run_until_complete(main.auto_opladen_actief()) if auto_opladen else False
         car_charging_status = "Ingeschakeld"  if auto_opladen else "Uitgeschakeld"
-        return jsonify(car_charging_status=car_charging_status)
+        return jsonify(car_charging_status=car_charging_status, iscarcharging=iscarcharging)
     except RuntimeError as e:
+        print("Had to catch a RuntimeError in car_charging_status")
         asyncio.wait(3)
         auto_opladen = loop.run_until_complete(main.auto_oplader_staat_aan())
+        iscarcharging = loop.run_until_complete(main.auto_opladen_actief()) if auto_opladen else False
         car_charging_status = "Ingeschakeld"  if auto_opladen else "Uitgeschakeld"
-        return jsonify(car_charging_status=car_charging_status)
+        return jsonify(car_charging_status=car_charging_status, iscarcharging=iscarcharging)
 
 @app.route('/house-energy-usage')
 def house_energy_usage():
@@ -207,7 +204,7 @@ def login():
             session = set_session(username)
             # put session in local storage
             resp = make_response(render_template('succes.html', redirect='/'))
-            resp.set_cookie('session', session, max_age=60*60*2)
+            resp.set_cookie('session', session, max_age=60*60*24*7*4)
             return resp
         else:
             with open('log.txt', 'a') as f:

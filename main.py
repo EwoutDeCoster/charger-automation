@@ -53,37 +53,43 @@ def is_time_to_activate(scheduled_time, target_date):
     return now >= scheduled_datetime
 
 def check_mogelijkheid_opladen():
-    verbruik = hw.get_energy_usage()
-    verbruik = verbruik.get('active_power_w')
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-    max_piek_verbruik = config['max_piek_verbruik']
-    auto_oplaad_verbruik = config['auto_oplaad_verbruik']
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-    max_piek_verbruik = config['max_piek_verbruik']
-    if verbruik + auto_oplaad_verbruik > max_piek_verbruik:
+    try:
+        verbruik = hw.get_energy_usage()
+        verbruik = verbruik.get('active_power_w')
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        max_piek_verbruik = config['max_piek_verbruik']
+        auto_oplaad_verbruik = config['auto_oplaad_verbruik']
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        max_piek_verbruik = config['max_piek_verbruik']
+        if verbruik + auto_oplaad_verbruik > max_piek_verbruik:
+            return False
+        else:
+            return True
+    except:
         return False
-    else:
-        return True
     
 async def auto_opladen_actief():
-    with open('config.json', 'r') as f:
-        config = json.load(f)
-    auto_oplaad_verbruik = config['auto_oplaad_verbruik']
-    client = ewelink.Client(password=password, email=email)
-    
-    # Login and create a session for the client
-    await client.login()
+    try:
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        auto_oplaad_verbruik = config['auto_oplaad_verbruik']
+        client = ewelink.Client(password=password, email=email)
+        
+        # Login and create a session for the client
+        await client.login()
 
-    # Now, call the specific function you want with the authenticated client
-    # For example, to get the status:
-    usage = await car.get_usage(client)
+        # Now, call the specific function you want with the authenticated client
+        # For example, to get the status:
+        usage = await car.get_usage(client)
 
 
-    await client.http.session.close()
-    await client.ws.close()
-    return float(usage) > auto_oplaad_verbruik/2
+        await client.http.session.close()
+        await client.ws.close()
+        return float(usage) > auto_oplaad_verbruik/2
+    except:
+        return False
 
 async def auto_oplader_staat_aan():
     client = ewelink.Client(password=password, email=email)
