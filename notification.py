@@ -5,6 +5,9 @@ import os
 import json
 from discord_webhook import DiscordEmbed, DiscordWebhook
 import requests
+import telegram_module as tg
+import asyncio
+import telegram_module
 with open('credentials.json', 'r') as f:
     credentials = json.load(f)
 # email module
@@ -141,14 +144,18 @@ def send_email(body, is_charging_on, recipient_email, subject="[AUTO] Oplader st
 
     try:
         # Use SMTP_SSL for SSL. Change to smtplib.SMTP if using TLS on port 587.
-        send_webhook(subject.replace("[AUTO] ",""), f"{body}", status="on" if is_charging_on else "off")
         server = smtplib.SMTP_SSL(host, port)
         server.login(email_address, email_password)
         server.sendmail(email_address, recipient_email, msg.as_string())
         server.quit()
-        print("Email sent successfully!")
+        print(f"Email sent successfully! {subject}")
     except Exception as e:
         print(f"Failed to send email: {e}")
+
+def send_social_message(body, is_charging_on, subject="[AUTO] Oplader status update"):
+    send_webhook(subject.replace("[AUTO] ",""), f"{body}", status="on" if is_charging_on else "off")
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(send_telegram_message(subject=subject.replace("[AUTO] ",""), body=body, status="on" if is_charging_on else "off"))
 
 def send_webhook(title:str, message:str, color:str=dc_color, status:str="on"):
     webhook = DiscordWebhook(url=dc_webhook, username=dc_username, avatar_url=dc_avatar)
@@ -160,3 +167,12 @@ def send_webhook(title:str, message:str, color:str=dc_color, status:str="on"):
     webhook.add_embed(embed)
 
     response = webhook.execute()
+
+async def send_telegram_message(subject, body, status):
+    config = telegram_module.load_config()
+    status = (
+        f"{'Oplader: AAN 🟢' if status.lower() == 'on' else 'Oplader: UIT 🔴'}"
+        f" | <a href='http://192.168.0.125/'>Dashboard</a>"
+    )
+    for chat_id in config["telegram"]["chat_ids"]:
+        await tg.send_message(chat_id, subject, body, status)

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Login - Charging Automation</title>
+    <meta name="description" content="Manage your website">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
+</head>
+
+<body class="bg-gradient-primary" style="background: var(--bs-warning-border-subtle);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-9 col-lg-12 col-xl-10">
+                <div class="card shadow-lg o-hidden border-0 my-5">
+                    <div class="card-body p-0">
+                        <div class="row">
+                            <div class="col-lg-6 d-none d-lg-flex">
+                                <div class="flex-grow-1 bg-login-image" style="background: url(&quot;assets/img/edc%20it%20white%20background.png&quot;) center / contain no-repeat;"></div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <div class="text-center">
+                                        <h4 class="text-dark mb-4">Welkom terug!</h4>
+                                    </div>
+                                    <form class="user" method="post">
+                                        <div class="mb-3"><input class="form-control form-control-user" type="email" id="exampleInputEmail" aria-describedby="emailHelp" placeholder="Vul email in..." name="username"></div>
+                                        <div class="mb-3"><input class="form-control form-control-user" type="password" id="exampleInputPassword" placeholder="Wachtwoord" name="password"></div><button class="btn btn-primary d-block btn-user w-100" type="submit" style="background: rgb(145,158,195);border-width: 0px;">Login</button>
+                                        <p style="color: var(--bs-form-invalid-color);margin-bottom: 0px;margin-top: 5px;">{{feedback}}</p>
+                                        <hr>
+                                    </form>
+                                    <div class="text-center"><a class="small" href="forgot-password">Wachtwoord vergeten?</a></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/bs-init.js"></script>
+    <script src="assets/js/theme.js"></script>
+</body>
+
+</html>

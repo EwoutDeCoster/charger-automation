@@ -1,5 +1,13 @@
-from flask import Flask, flash, render_template, request, jsonify, redirect, send_from_directory, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
+from src.database import set_session, checkCredentials, check_session, getCompany, sessiontocompany, getUserNameBySession, userExists, setPId, getPId, setPassword, encryptPassword
+from src.mail import passwordreset
+import datetime
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import hashlib
+from flask import make_response
 
 import requests
 import main
@@ -10,12 +18,21 @@ import os
 import main
 from threading import Thread
 
+PORT = 80
+URL = "127.0.0.1"
+reseturl = f"ewoutdecoster.tech"
+
 loop = asyncio.get_event_loop()
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
-app.secret_key = os.urandom(24)
+app = Flask(__name__, static_folder='templates/assets')
+app.secret_key = os.urandom(24) # Use a persistent secret key.
 
-# Load or initialize the configuration
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["300 per minute"]
+)
+
 def load_config():
     try:
         with open('config.json', 'r') as file:
@@ -34,6 +51,8 @@ def async_wrapper(loop, coroutine):
 
 @app.route('/')
 def home():
+    if not checkSession(request):
+        return redirect(url_for('login'))
     try:
         config = load_config()
         # Dummy data for demonstration; replace with real data retrieval
@@ -55,11 +74,14 @@ def home():
                             car_charging_status="Data ophalen...", 
                             house_energy_usage=f"{hw.get_energy_usage().get('active_power_w')} W",
                             overwrite_charging=config["overwrite_charging"], only_charge_when_solar=config["only_charge_when_solar"], only_charge_at_daytime=config["only_charge_at_daytime"])
-    
+
 @app.route('/settings')
 def settings():
-    config = load_config()
-    return render_template('settings.html', config=config)
+    if not checkSession(request):
+        return redirect(url_for('login'))
+    else:
+        config = load_config()
+        return render_template('settings.html', config=config)
 
 @app.route('/update-settings', methods=['POST'])
 def update_settings():
@@ -121,46 +143,149 @@ def weather_data():
 
 @app.route('/toggle-charging', methods=['POST'])
 def toggle_charging():
-    config = load_config()
-    config["overwrite_charging"] = not config["overwrite_charging"]
-    save_config(config)
-    return jsonify({"success": True, "overwrite_charging": config["overwrite_charging"]})
+    if checkSession(request):
+        config = load_config()
+        config["overwrite_charging"] = not config["overwrite_charging"]
+        save_config(config)
+        return jsonify({"success": True, "overwrite_charging": config["overwrite_charging"]})
 
 @app.route('/update-solar-charging', methods=['POST'])
 def update_solar_charging():
-    try:
-        data = request.get_json()
-        only_charge_when_solar = data.get('only_charge_when_solar', False)
-        
-        # Load, update, and save the configuration
-        config = load_config()  # Assuming you have a function to load your current config
-        config['only_charge_when_solar'] = only_charge_when_solar
-        save_config(config)  # Assuming you have a function to save your updated config      
-        return jsonify({"success": True, "message": "Solar charging setting updated successfully."})
-    except Exception as e:
-        print(e)
-        return jsonify({"success": False, "message": str(e)}), 500
+    if checkSession(request):
+        try:
+            data = request.get_json()
+            only_charge_when_solar = data.get('only_charge_when_solar', False)
+            
+            # Load, update, and save the configuration
+            config = load_config()  # Assuming you have a function to load your current config
+            config['only_charge_when_solar'] = only_charge_when_solar
+            save_config(config)  # Assuming you have a function to save your updated config      
+            return jsonify({"success": True, "message": "Solar charging setting updated successfully."})
+        except Exception as e:
+            print(e)
+            return jsonify({"success": False, "message": str(e)}), 500
+    else:
+        return render_template('error.html')
 
 @app.route('/update-daytime-charging', methods=['POST'])
 def update_daytime_charging():
-    try:
-        data = request.get_json()
-        daytime_charging = data.get('only_charge_at_daytime', False)
-        
-        # Load, update, and save the configuration
-        config = load_config()  # Assuming you have a function to load your current config
-        config['only_charge_at_daytime'] = daytime_charging
-        save_config(config)  # Assuming you have a function to save your updated config
-        return jsonify({"success": True, "message": "Daytime charging setting updated successfully."})
-    except Exception as e:
-        print(e)
-        return jsonify({"success": False, "message": str(e)}), 500
+    if checkSession(request):
+        try:
+            data = request.get_json()
+            daytime_charging = data.get('only_charge_at_daytime', False)
+            
+            # Load, update, and save the configuration
+            config = load_config()  # Assuming you have a function to load your current config
+            config['only_charge_at_daytime'] = daytime_charging
+            save_config(config)  # Assuming you have a function to save your updated config
+            return jsonify({"success": True, "message": "Daytime charging setting updated successfully."})
+        except Exception as e:
+            print(e)
+            return jsonify({"success": False, "message": str(e)}), 500
+    else:
+        return render_template('error.html')
 
 @app.route('/check-notifications')
 def check_notifications():
     # Dummy function to simulate server deciding to send a notification
     return {'title': 'Server Alert', 'body': 'Something important happened!'}
 
+@app.route('/login', methods=['GET','POST'])
+@limiter.limit("5 per minute", error_message="Te veel requests", methods=['POST'])
+def login():
+    if checkSession(request):
+        return render_template('succes.html', redirect='/')
+    if request.method == 'POST':
 
+        username = request.form['username'].lower()
+        password = request.form['password']
+        print(username, password)
+        if checkCredentials(username, password):
+            # write username loging to log file and UTC+01:00 time
+            with open('log.txt', 'a') as f:
+                f.write(str(datetime.datetime.now()) + " " + username + " logged in\n")
+            session = set_session(username)
+            # put session in local storage
+            resp = make_response(render_template('succes.html', redirect='/'))
+            resp.set_cookie('session', session, max_age=60*60*2)
+            return resp
+        else:
+            with open('log.txt', 'a') as f:
+                f.write(str(datetime.datetime.now()) + " " + username + " failed to login\n")
+            return render_template('login.html', feedback="email of wachtwoord is onjuist")
+    else:
+        return render_template('login.html')
+    
+@app.route('/logout')
+def logout():
+    if checkSession(request):
+        session = request.cookies.get('session')
+        with open('log.txt', 'a') as f:
+            f.write(str(datetime.datetime.now()) + " " + sessiontocompany(session) + " logged out\n")
+        resp = make_response(render_template('succes.html', redirect='/login'))
+        resp.set_cookie('session', '', expires=0)
+        return resp
+    else:
+        return render_template('error.html')
+    
+@app.route('/resetpassword', methods=['GET','POST'])
+@limiter.limit("3 per minute", methods=['POST'])
+def resetpassword():
+    if request.method == 'POST':
+        username = request.args.get('email')
+        pid = request.args.get('pid')
+        if getPId(username) == pid:
+            if request.form['password'] != request.form['confirmpassword']:
+                return render_template('reset-password.html', feedback="De wachtwoorden komen niet overeen")
+            password = request.form['password']
+            print(password)
+            setPassword(username,pid, password)
+            return render_template('succes.html', redirect='/login')
+        else:
+            return render_template('reset-password.html', feedback="De wachtwoord reset link is niet geldig of verlopen")
+    return render_template('reset-password.html')
+
+
+
+@app.route('/forgot-password', methods=['GET','POST'])
+@limiter.limit("3 per minute", methods=['POST'])
+def forgotpassword():
+    if request.method == 'POST':
+        email = request.form['username']
+        if userExists(email):
+            randomhash = hashlib.sha256()
+            randomhash.update(os.urandom(128))
+            pId = randomhash.hexdigest()
+            setPId(email, pId)
+            res = passwordreset(email, f"http://{reseturl}/resetpassword?email={email}&pid={pId}")
+            if res:
+                return render_template('succes.html', redirect='/login')
+            else:
+                return render_template('forgot-password.html', feedback="Er is een fout opgetreden")
+        else:
+            return render_template('forgot-password.html', feedback="Er is geen account met dit email adres")
+    return render_template('forgot-password.html')
+
+@app.route('/register', methods=['GET','POST'])
+@limiter.limit("3 per minute", methods=['POST'])
+
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return "<h1>Te veel requests!</h1>Je stuurt te veel requests naar de server, wacht even en probeer het opnieuw.", 429
+
+def checkSession(req):
+    if req.cookies.get('session'):
+        session = req.cookies.get('session')
+        valid = check_session(session)
+        if valid:
+            return True
+        else:
+            return False
+    else:
+        return False
+
+# run the app
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=PORT)

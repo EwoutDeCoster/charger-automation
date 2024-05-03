@@ -145,13 +145,21 @@ def manage_opladen():
         if oplader_aan and not charging_allowed:
             loop.run_until_complete(auto_uit())
             logging.info(f'Auto opladen uitgeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W < 100 W')
+            message = f'Er is niet genoeg zon om de auto uitsluitend met zonne-energie op te laden.'
+            status = False
+            subject = "🌥️ Niet genoeg zonne-energie"
+            notification.send_social_message(message, status, subject)
             for i in config['notification_contacts']:
-                notification.send_email('Er is niet genoeg zonne-energie om de auto op te laden.', False, i, "☁️ Niet genoeg zonne-energie")
+                notification.send_email(message, status, i, subject)
         elif not oplader_aan and charging_allowed:
             loop.run_until_complete(auto_aan())
             logging.info(f'Auto opladen ingeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W > 100 W')
+            message = f'Er is genoeg zonne-energie om de auto op te laden. Geschatte restwaarde: {huidig_verbruik + auto_oplaad_verbruik} W'
+            status = True
+            subject = "🌞 Genoeg zonne-energie"
+            notification.send_social_message(message, status, subject)
             for i in config['notification_contacts']:
-                notification.send_email('Er is genoeg zonne-energie om de auto op te laden.', True, i, "🌞 Genoeg zonne-energie")
+                notification.send_email(message, status, i, subject)
         return
     
     if ONLY_CHARGE_AT_DAYTIME:
@@ -160,24 +168,36 @@ def manage_opladen():
             if not oplader_aan:
                 loop.run_until_complete(auto_aan())
                 logging.info(f'Auto opladen ingeschakeld, de zon is opgekomen.')
+                message = "De zon komt op. De auto mag dus opladen."
+                status = True
+                subject = "☀️ Zon is opgekomen"
+                notification.send_social_message(message, status, subject)
                 for i in config['notification_contacts']:
-                    notification.send_email('De zon komt op. De auto mag opnieuw opladen.', True, i, "☀️ Zon is opgekomen")
+                    notification.send_email(message, status, i, subject)
             return
         else:
             if oplader_aan:
                 loop.run_until_complete(auto_uit())
                 logging.info(f'Auto opladen uitgeschakeld, de zon is ondergegaan.')
+                message = 'De zon is ondergegaan. De auto mag niet meer laden.'
+                status = False
+                subject = "✨ Zon is ondergegaan"
+                notification.send_social_message(message, status, subject)
                 for i in config['notification_contacts']:
-                    notification.send_email('De zon is ondergegaan. De auto mag niet meer laden.', False, i, "✨ Zon is ondergegaan")
+                    notification.send_email(message, status, i, subject)
             return
      
-# regular peak power management    
+    # regular peak power management    
     if oplader_aan:
         if huidig_verbruik > max_piek_verbruik:
             loop.run_until_complete(auto_uit())
             logging.info(f'Auto opladen uitgeschakeld, huidig verbruik: {huidig_verbruik} W > max verbruik: {max_piek_verbruik} W')
+            message = f'Er is te veel verbruik om de auto op te laden. ({huidig_verbruik} W)'
+            status = False
+            subject = "📈 Piek vermeden"
+            notification.send_social_message(message, status, subject)
             for i in config['notification_contacts']:
-                notification.send_email(f'Er is te veel verbruik om de auto op te laden. ({huidig_verbruik} W)', False, i, "🥵 Te veel verbruik")
+                notification.send_email(message, status, i, subject)
         else:
             pass
     else:
@@ -185,8 +205,12 @@ def manage_opladen():
             loop.run_until_complete(auto_aan())
             logging.info(f'Auto opladen ingeschakeld, verbruik + opladen: {huidig_verbruik + auto_oplaad_verbruik} W < max verbruik: {max_piek_verbruik} W')
             try:
+                message = f'De oplader is opnieuw ingeschakeld.'
+                status = True
+                subject = "✅ Auto oplader ingeschakeld"
+                notification.send_social_message(message, status, subject)
                 for i in config['notification_contacts']:
-                    notification.send_email('De auto oplader is opnieuw ingeschakeld.', True, i, "⚡ Auto oplader ingeschakeld")
+                    notification.send_email(message, status, i, subject)
             except:
                 pass
         else:
