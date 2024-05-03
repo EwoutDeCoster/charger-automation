@@ -2,3 +2,10 @@ fusionSolar.py
 credentials.json
 __pycache__
 /ewelink
+*.json
+database.db
+*.log
+log.txt
+*.mp3
+notification.html
+mail.py
