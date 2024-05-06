@@ -68,7 +68,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def dashboard(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /dashboard is issued
     This command will send a message with a link to the dashboard."""
-    url = "http://192.168.0.125/"
+    url = "https://ewoutdecoster.tech/"
     text = (
         f"⚡️ <b>Dashboard</b>\n"
         f"——————————————————\n"

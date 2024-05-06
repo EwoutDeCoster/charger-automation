@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
-from src.database import set_session, checkCredentials, check_session, getCompany, sessiontocompany, getUserNameBySession, userExists, setPId, getPId, setPassword, encryptPassword
+from src.database import set_session, checkCredentials, check_session, getCompany, sessiontocompany, getUserNameBySession, userExists, setPId, getPId, setPassword, encryptPassword, userToSession, renewSession
 from src.mail import passwordreset
 import datetime
 from flask_limiter import Limiter
@@ -48,6 +48,15 @@ def async_wrapper(loop, coroutine):
     """Run the given coroutine in the provided event loop."""
     asyncio.set_event_loop(loop)
     loop.run_until_complete(coroutine)
+
+@app.route('/favicon.png')
+def favicon():
+    return app.send_static_file('favicon.png')
+
+@app.route('/manifest.json')
+def manifest():
+    return app.send_static_file('manifest.json')
+
 
 @app.route('/')
 def home():
@@ -196,12 +205,20 @@ def login():
 
         username = request.form['username'].lower()
         password = request.form['password']
-        print(username, password)
         if checkCredentials(username, password):
             # write username loging to log file and UTC+01:00 time
             with open('log.txt', 'a') as f:
                 f.write(str(datetime.datetime.now()) + " " + username + " logged in\n")
-            session = set_session(username)
+            existing_session = userToSession(username)
+            if bool(existing_session):
+                if existing_session[0] is not None and datetime.datetime.strptime(existing_session[1], '%Y-%m-%d %H:%M:%S.%f') > datetime.datetime.now():
+                    # put session in local storage
+                    renewSession(existing_session[0])
+                    session = existing_session[0]
+                else:
+                    session = set_session(username)
+            else:
+                session = set_session(username)
             # put session in local storage
             resp = make_response(render_template('succes.html', redirect='/'))
             resp.set_cookie('session', session, max_age=60*60*24*7*4)

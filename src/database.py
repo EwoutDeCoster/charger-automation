@@ -20,7 +20,7 @@ def set_session(username):
     session = randomhash.hexdigest()
     # update the session in the for the user and update the expire time to 2 hours
     c, conn = connection()
-    c.execute("UPDATE credentials SET session = ?, expire = ? WHERE username = ?", (session, datetime.datetime.now() + datetime.timedelta(hours=2), username))
+    c.execute("UPDATE credentials SET session = ?, expire = ? WHERE username = ?", (session, datetime.datetime.now() + datetime.timedelta(days=21), username))
     conn.commit()
     conn.close()
     return session
@@ -53,7 +53,7 @@ def check_session(session):
 def get_user_info(session):
     # Get the user from the session
     c, conn = connection()
-    c.execute("SELECT * FROM credentials WHERE session = ?", (session))
+    c.execute("SELECT * FROM credentials WHERE session = ?", (session,))
     result = c.fetchone()
     conn.close()
     try:
@@ -226,3 +226,36 @@ def userExists(email):
         print(e)
         return False
     
+def userToSession(username):
+    # Get the session from the user
+    c, conn = connection()
+    c.execute("SELECT session, expire FROM credentials WHERE username = ?", (username,))
+    result = c.fetchone()
+    conn.close()
+    try:
+        if result:
+            return result
+        else:
+            return False
+    except Exception as e:
+        print(e)
+        return False
+    
+def getallcredentials():
+    c, conn = connection()
+    c.execute("SELECT * FROM credentials")
+    result = c.fetchall()
+    conn.close()
+    return result
+
+def renewSession(session):
+    try:
+        # Renew the session
+        c, conn = connection()
+        c.execute("UPDATE credentials SET expire = ? WHERE session = ?", (datetime.datetime.now() + datetime.timedelta(days=21), session))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(e)
+        return False
